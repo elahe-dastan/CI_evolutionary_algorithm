@@ -18,6 +18,13 @@ for i in range(chromosome_length):
     weights[i] = int(value_weight[1])
 
 EA = EvolutionaryAlgorithm(10, chromosome_length, 20, weights, values, max_weight, total_value)
+EA.initial_population()
+parents = EA.parent_selection()
+children = EA.new_children(parents)
+population = EA.remaining_population_selection(parents, children)
+EA.
+
+
 
 
 print("hello world")
