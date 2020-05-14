@@ -30,18 +30,27 @@ def warning_data_type_check_selection_algorithms(items, probs):
 
 
 class EvolutionaryAlgorithm:
-    def __init__(self, m, n, y, weights, values, max_weight, total_value):
+    def __init__(self, m, n, y, max_evaluation_count, weights, values, max_weight, total_value):
         # mu
         self.m = m
         # length of chromosome
         self.n = n
         self.y = y
+        self.max_evaluation_count = max_evaluation_count
         self.weights = weights
         self.values = values
         self.max_weight = max_weight
-        self.total_value = total_value
         self.evaluation_counter = 0
-        self.population = np.array(m, dtype=Chromosome)
+        self.population = np.empty(m, dtype=Chromosome)
+
+    def run(self):
+        while True:
+            parents = self.parent_selection()
+            children = self.new_children(parents)
+            self.population = self.remaining_population_selection(self.population, children)
+
+            if self.stop_condition():
+                break
 
     def initial_population(self):
         for i in range(self.m):
@@ -59,14 +68,15 @@ class EvolutionaryAlgorithm:
                 chromosome_weight += self.weights[i]
                 chromosome_value += self.values[i]
 
-        fitness = 0
-        if chromosome_weight > self.max_weight:
-            fitness += 10 * (chromosome_weight - self.max_weight)
+        fitness = chromosome_value
 
-        if chromosome_value < self.total_value:
-            fitness += self.total_value - chromosome_value
+        if chromosome_weight > self.max_weight:
+            fitness -= chromosome_weight - self.max_weight
 
         self.evaluation_counter += 1
+
+        if fitness < 0:
+            return 1 / abs(fitness)
 
         return fitness
 
@@ -112,7 +122,7 @@ class EvolutionaryAlgorithm:
         return children[:self.y]
 
     def cross_over(self, parent1, parent2):
-        idx = self.n / 2
+        idx = int(self.n / 2)
         chromosome1, chromosome2 = Chromosome(self.n), Chromosome(self.n)
         # rand = np.random.random()
         chromosome1.genes[:idx] = parent1.genes[:idx]
@@ -128,12 +138,12 @@ class EvolutionaryAlgorithm:
             if rand < prob:
                 chromosome.genes[i] = int(not chromosome.genes[i])
 
-    def remaining_population_selection(self, parents, children):
-        items = np.concatenate((parents, children))
+    def remaining_population_selection(self, previous_population, children):
+        items = np.concatenate((previous_population, children))
         fitness_arr = np.array([x.fitness for x in items])
         probs = fitness_arr / np.sum(fitness_arr)
 
-        self.q_tournament_selection(items, probs, 4, self.y)
+        return self.q_tournament_selection(items, probs, 4, self.y)
 
     def q_tournament_selection(self, items, probs, q, n):
         # assert q != 0
@@ -158,3 +168,4 @@ class EvolutionaryAlgorithm:
         return np.array(selected_items)
 
     def stop_condition(self):
+        return self.evaluation_counter > self.max_evaluation_count
