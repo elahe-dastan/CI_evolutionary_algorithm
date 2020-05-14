@@ -2,6 +2,7 @@ from chromosome import Chromosome
 import numpy as np
 import random
 import warnings
+import math
 
 
 def warning_data_type_check_selection_algorithms(items, probs):
@@ -11,26 +12,34 @@ def warning_data_type_check_selection_algorithms(items, probs):
         probs = np.array(probs)
     if len(probs) != len(items):
         raise ValueError(
-            "Length of probs and items must be equal! probs length = {} and items length = {}".format(len(probs),
-                                                                                                      len(items)))
+            "Length of probs and items must be equal! probs length = {} and items length = {}".format(
+                len(probs), len(items)
+            )
+        )
     if type(probs) != np.ndarray or type(items) != np.ndarray:
         raise ValueError(
             "Type of items and probs must be list or np.array, items type = {} and probs type = {}".format(
-                type(items),
-                type(probs)))
+                type(items), type(probs)
+            )
+        )
     if np.min(probs) < 0:
         raise ValueError("Probabilities can not contain negative values")
 
     if np.sum(probs) != 1:
         warnings.warn(
-            'Sum of Probabilities array must be 1 but it is = {}, and we normalize it to reach sum equal 1'.format(
-                np.sum(probs)), stacklevel=4)
+            "Sum of Probabilities array must be 1 but it is = {}, and we normalize it to reach sum equal 1".format(
+                np.sum(probs)
+            ),
+            stacklevel=4,
+        )
         probs = probs / np.sum(probs)
     return items, probs
 
 
 class EvolutionaryAlgorithm:
-    def __init__(self, m, n, y, max_evaluation_count, weights, values, max_weight, total_value):
+    def __init__(
+        self, m, n, y, max_evaluation_count, weights, values, max_weight, total_value
+    ):
         # mu
         self.m = m
         # length of chromosome
@@ -47,7 +56,9 @@ class EvolutionaryAlgorithm:
         while True:
             parents = self.parent_selection()
             children = self.new_children(parents)
-            self.population = self.remaining_population_selection(self.population, children)
+            self.population = self.remaining_population_selection(
+                self.population, children
+            )
 
             if self.stop_condition():
                 break
@@ -99,7 +110,7 @@ class EvolutionaryAlgorithm:
         items_pointer = 0
 
         for choice in index_of_choose:
-            while cum_sum[items_pointer] < choice:
+            while math.isclose(cum_sum[items_pointer], choice):
                 items_pointer += 1
             selected_items.append(items[items_pointer])
 
@@ -119,7 +130,7 @@ class EvolutionaryAlgorithm:
             if len(children) >= self.y:
                 break
 
-        return children[:self.y]
+        return children[: self.y]
 
     def cross_over(self, parent1, parent2):
         idx = int(self.n / 2)
@@ -143,7 +154,7 @@ class EvolutionaryAlgorithm:
         fitness_arr = np.array([x.fitness for x in items])
         probs = fitness_arr / np.sum(fitness_arr)
 
-        return self.q_tournament_selection(items, probs, 4, self.y)
+        return self.q_tournament_selection(items, probs, 4, self.m)
 
     def q_tournament_selection(self, items, probs, q, n):
         # assert q != 0

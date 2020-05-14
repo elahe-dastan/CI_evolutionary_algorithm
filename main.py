@@ -21,7 +21,3 @@ EA = EvolutionaryAlgorithm(10, chromosome_length, 20, 1000, weights, values, max
 EA.initial_population()
 
 EA.run()
-
-ch = chromosome.Chromosome()
-print(ch.random_chromosome(10))
-
