@@ -5,6 +5,7 @@ import warnings
 import math
 import evolutionary_algorithms_functions as ea
 
+# lamba = mu * 7
 
 def warning_data_type_check_selection_algorithms(items, probs):
     if type(items) == list:
@@ -147,6 +148,7 @@ class EvolutionaryAlgorithm:
 
         return children[: self.y]
 
+    # ehtemal
     def cross_over(self, parent1, parent2):
         idx = int(self.n / 2)
         chromosome1, chromosome2 = Chromosome(self.n, ea.binary_random_gene_generator), Chromosome(self.n, ea.binary_random_gene_generator)
@@ -163,6 +165,7 @@ class EvolutionaryAlgorithm:
             rand = np.random.random()
             if rand < prob:
                 chromosome.genes[i] = int(not chromosome.genes[i])
+
 
     def remaining_population_selection(self, previous_population, children):
         items = np.concatenate((previous_population, children))
