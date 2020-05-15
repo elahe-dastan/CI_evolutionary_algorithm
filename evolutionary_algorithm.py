@@ -1,4 +1,5 @@
-from chromosome import Chromosome
+from representation.chromosome import *
+from representation.binary_chromosome import *
 import numpy as np
 import random
 import warnings
@@ -25,7 +26,7 @@ def warning_data_type_check_selection_algorithms(items, probs):
     if np.min(probs) < 0:
         raise ValueError("Probabilities can not contain negative values")
 
-    if np.sum(probs) != 1:
+    if not math.isclose(np.sum(probs), 1):
         warnings.warn(
             "Sum of Probabilities array must be 1 but it is = {}, and we normalize it to reach sum equal 1".format(
                 np.sum(probs)
@@ -38,7 +39,7 @@ def warning_data_type_check_selection_algorithms(items, probs):
 
 class EvolutionaryAlgorithm:
     def __init__(
-        self, m, n, y, max_evaluation_count, weights, values, max_weight, total_value
+            self, m, n, y, max_evaluation_count, weights, values, max_weight
     ):
         # mu
         self.m = m
@@ -51,24 +52,35 @@ class EvolutionaryAlgorithm:
         self.max_weight = max_weight
         self.evaluation_counter = 0
         self.population = np.empty(m, dtype=Chromosome)
+        self.log = []
+        self.best_chromosome_fitness_in_total = 0
+        self.generation_counter = 0
 
-    def run(self):
+    def run(self, save_log_path):
         while True:
             parents = self.parent_selection()
             children = self.new_children(parents)
             self.population = self.remaining_population_selection(
                 self.population, children
             )
+            self.generation_counter += 1
+            self.log.append(self._save_current_log())
 
             if self.stop_condition():
                 break
+        with open(save_log_path, 'w') as file:
+            for l in self.log:
+                print(l, file=file)
+
+        self.get_answer()
 
     def initial_population(self):
         for i in range(self.m):
-            chromosome = Chromosome(self.n)
+            chromosome = BinaryChromosome(self.n)
             chromosome.random_chromosome()
             chromosome.fitness = self.calculate_fitness(chromosome)
             self.population[i] = chromosome
+        self.log.append(self._save_current_log())
 
     def calculate_fitness(self, chromosome):
         chromosome_weight = 0
@@ -110,8 +122,11 @@ class EvolutionaryAlgorithm:
         items_pointer = 0
 
         for choice in index_of_choose:
-            while math.isclose(cum_sum[items_pointer], choice):
+            while cum_sum[items_pointer] < choice:
+                if items_pointer == self.m - 1:
+                    break
                 items_pointer += 1
+
             selected_items.append(items[items_pointer])
 
         return np.array(selected_items)
@@ -134,7 +149,7 @@ class EvolutionaryAlgorithm:
 
     def cross_over(self, parent1, parent2):
         idx = int(self.n / 2)
-        chromosome1, chromosome2 = Chromosome(self.n), Chromosome(self.n)
+        chromosome1, chromosome2 = BinaryChromosome(self.n), BinaryChromosome(self.n)
         # rand = np.random.random()
         chromosome1.genes[:idx] = parent1.genes[:idx]
         chromosome1.genes[idx:] = parent2.genes[idx:]
@@ -154,7 +169,7 @@ class EvolutionaryAlgorithm:
         fitness_arr = np.array([x.fitness for x in items])
         probs = fitness_arr / np.sum(fitness_arr)
 
-        return self.q_tournament_selection(items, probs, 4, self.m)
+        return self.q_tournament_selection(items, probs, 2, self.m)
 
     def q_tournament_selection(self, items, probs, q, n):
         # assert q != 0
@@ -180,3 +195,38 @@ class EvolutionaryAlgorithm:
 
     def stop_condition(self):
         return self.evaluation_counter > self.max_evaluation_count
+
+    def _save_current_log(self):
+        fitness = []
+        best_phenotype_index = 0
+        for i in range(1, len(self.population)):
+            if self.population[i].fitness > self.population[best_phenotype_index].fitness:
+                best_phenotype_index = i
+            fitness.append(self.population[i].fitness)
+        var_fitness = np.var(fitness)
+        avg_fitness = np.average(fitness)
+        if self.population[best_phenotype_index].fitness >= self.best_chromosome_fitness_in_total:
+            self.best_chromosome_fitness_in_total = self.population[best_phenotype_index].fitness
+            best_chrom = self.population[best_phenotype_index]
+        return {'generation': self.generation_counter,
+                'avg_fitness': avg_fitness,
+                'var_fitness': var_fitness,
+                # 'best_phenotype': best_chrom,
+                'best_fitness': self.population[best_phenotype_index].fitness,
+                }
+
+    def get_answer(self):
+        best_phenotype_index = 0
+        for i in range(1, len(self.population)):
+            if self.population[i].fitness > self.population[best_phenotype_index].fitness:
+                best_phenotype_index = i
+
+        chromosome_weight = 0
+        chromosome_value = 0
+
+        for i in range(self.n):
+            if self.population[best_phenotype_index].genes[i] == 1:
+                chromosome_weight += self.weights[i]
+                chromosome_value += self.values[i]
+
+        print(chromosome_weight, chromosome_value)
