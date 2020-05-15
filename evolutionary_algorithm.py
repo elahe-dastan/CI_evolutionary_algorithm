@@ -1,9 +1,9 @@
 from representation.chromosome import *
-from representation.binary_chromosome import *
 import numpy as np
 import random
 import warnings
 import math
+import evolutionary_algorithms_functions as ea
 
 
 def warning_data_type_check_selection_algorithms(items, probs):
@@ -76,11 +76,11 @@ class EvolutionaryAlgorithm:
 
     def initial_population(self):
         for i in range(self.m):
-            chromosome = BinaryChromosome(self.n)
-            chromosome.random_chromosome()
+            chromosome = Chromosome(self.n, ea.binary_random_gene_generator)
             chromosome.fitness = self.calculate_fitness(chromosome)
             self.population[i] = chromosome
         self.log.append(self._save_current_log())
+
 
     def calculate_fitness(self, chromosome):
         chromosome_weight = 0
@@ -149,7 +149,7 @@ class EvolutionaryAlgorithm:
 
     def cross_over(self, parent1, parent2):
         idx = int(self.n / 2)
-        chromosome1, chromosome2 = BinaryChromosome(self.n), BinaryChromosome(self.n)
+        chromosome1, chromosome2 = Chromosome(self.n, ea.binary_random_gene_generator), Chromosome(self.n, ea.binary_random_gene_generator)
         # rand = np.random.random()
         chromosome1.genes[:idx] = parent1.genes[:idx]
         chromosome1.genes[idx:] = parent2.genes[idx:]
