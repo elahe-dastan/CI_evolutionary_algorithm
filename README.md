@@ -13,6 +13,12 @@ These are the fixed steps in an evolutionary algorithm<br/>
 7.check the stop condition, if not met repeat from step 3<br/><br/>
 ![FlowChart](images/Flowchart.png)
 
+## Structure
+The first structure idea that pops to my and any one else's mind is using inheritance and that looks more appropriate<br/>
+but the goal of this code is to get familiar with evolution and some algorithms frequently used in this field so to <br/>
+show these objectives better I decided to have a class that just shows the evolution process and another class that<br/>
+has the implementations of the algorithms I mentioned
+
 ## knapsack problem representation 
 I think binary representation can be a good choice, the length of the chromosomes is equal to the number of weights,<br/>
 each gene in the chromosome shows if its corresponding weight is selected or not by being zero or one.
